@@ -477,6 +477,8 @@ res.hc <- hclust(d, method = "ward.D2" )
 res.hc
 
 ```
+# Its is difficult to specify the number of k needed but it is easy to implement.
+
 ```{r}
 # First we use the dist() function to compute the Euclidean distance between observations, 
 # d will be the first argument in the hclust() function dissimilarity matrix
@@ -497,6 +499,8 @@ for (i in 1:length(method_unique)){
 }
   
 ```
+
+# We do not need to specify the number of clusters we need as the model does so and has a more informative insight.
 
 ## DBSCAN Model
 ```{r}
@@ -529,7 +533,7 @@ hullplot(unique1,db$cluster)
 
 
 ```
-
+#This type of clustering is useful since we have a large number of outliers within our datasets with a limitation of not working well with large dimensionality. Its is useful to find association and structure in data. 
 ```{r}
 
 ```
