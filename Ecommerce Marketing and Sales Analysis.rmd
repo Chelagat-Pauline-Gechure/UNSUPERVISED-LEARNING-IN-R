@@ -1,0 +1,535 @@
+```{r}
+#Loading the data
+commerce <- read.csv("http://bit.ly/EcommerceCustomersDataset", sep=",", header = TRUE)
+View(commerce)
+
+#Previweing the dataset
+str(commerce)
+
+dim(commerce)
+
+head(commerce)
+
+class(commerce)
+
+typeof(commerce)
+
+#Finding the length of the dataframe
+length(commerce)
+```
+
+```{r}
+##Cleaning the data
+#Identifying the missing values
+#is.na(commerce)
+
+colSums(is.na(commerce))
+
+# Finding the percentage of null values in the dataset
+colSums(is.na(commerce))/length(commerce)*100
+
+## Removing the missing values
+commerce <- na.omit(commerce)
+
+#There are no missing values in the dataset.
+```
+
+
+```{r}
+##Checking and dealing with duplicates
+duplicate_rows <- commerce[duplicated(commerce),]
+duplicate_rows
+
+```
+
+```{r}
+## Removing the duplicate values
+unique_commerce <- commerce[!duplicated(commerce), ]
+unique_commerce
+
+```
+# Dealing with outliers
+
+```{r}
+##Checking and dealing with outliers
+
+library(tidyverse)
+
+outliers <- boxplot(unique_commerce %>% select_if(is.numeric))
+outliers
+```
+
+```{r}
+#Most columns have outliers.
+outlier_values <- boxplot.stats(unique_commerce$Administrative)$out
+outlier_values
+
+##Viewing the outliers
+stat = boxplot.stats(unique_commerce$Administrative)
+stat
+
+
+```
+
+```{r}
+#Identifying the outliers
+boxplot(unique_commerce%>% select_if(is.numeric), plot=FALSE)$out
+
+#Saving the outliers in a vector
+outliers <- boxplot(unique_commerce%>% select_if(is.numeric), plot=FALSE)$out
+
+#Removing the outliers from the dataset
+
+unique_commerce<- unique_commerce[-which(unique_commerce$Administrative %in% outliers),]
+```
+
+
+```{r} 
+numeric_commerce <- unique_commerce %>%select(-11, -16,-17,-18)
+numeric_commerce
+
+character_commerce <- unique_commerce %>% select ( 11, 16, 17,18)
+character_commerce
+
+# Getting the unique items in the categorical columns
+lapply(character_commerce, function(x)unique(x))
+
+``` 
+# UNIVARIATE ANALYSIS
+## Measures of central tendency
+### 1. MEAN 
+
+```{r}
+library(dplyr)
+unique_commerce %>% summarize_each(funs(mean))
+```
+
+```{r}
+unique_commerce %>% summarize_each(funs(median))
+```
+
+```{r}
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+unique.mode<- list(c(getmode(unique_commerce$Month), getmode(unique_commerce$VisitorType), getmode(unique_commerce$Weekend), getmode(unique_commerce$Revenue)))
+unique.mode
+
+```
+
+## 2. MEASURES OF DISPERSION 
+### Min, 1st quantile, median, 3rd quantile and max
+```{r}
+#Finding the min, 1st quantile, median, 3rd quantile and max of numeric columns.
+summary(unique_commerce)
+```
+
+
+
+### Standard deviation
+```{r}
+stddev = vector("double", ncol(numeric_commerce))
+for(i in seq_along(numeric_commerce))             
+{
+ stddev[[i]] = sd(numeric_commerce[[i]])          
+ 
+}
+stddev
+```
+```{r}
+sapply(numeric_commerce, sd)
+
+```
+### Quantile
+```{r}
+sapply(numeric_commerce, quantile)
+
+```
+
+### Variance
+```{r}
+sapply(numeric_commerce, var)
+
+```
+
+```{r}
+# Encoding the categorical columns.
+for (i in 1:length(unique_commerce)){
+ unique_commerce[[i]] <- as.numeric(as.factor(unique_commerce[[i]]))
+}
+```
+
+## Bar graphs
+```{r}
+par(mfrow = c(2, 2))  # Set up a 2 x 2 plotting space
+
+# Create the loop.vector (all the columns)
+loop.vector <- 1:2
+
+for (i in loop.vector) { # Loop over loop.vector
+
+  # store data in column.i as x
+  x <- numeric_commerce[,i]
+  
+  # Plot histogram of x
+  hist(x,
+       main = paste("Question", i),
+       xlab = "Scores",
+       xlim = c(0, 50))
+}
+```
+
+```{r}
+daily.time.spent.frequency <- table(unique_commerce$Administrative)
+barplot(daily.time.spent.frequency, main =" Bar graph of daily time spent on site", col =  "blue")
+
+daily.time.frequency <- table(unique_commerce$Administrative_Duration)
+barplot(daily.time.frequency, main =" Bar graph of daily time spent on site", col =  "blue")
+```
+
+```{r}
+par(mfrow=c(2,2), mar=c(2,5,2,1), las=1, bty="n")
+
+admin<- table(unique_commerce$Administrative)
+barplot(admin, main =" Bar graph of administrative pages visited", col =  "red")
+
+info <- table(unique_commerce$Informational)
+barplot(info, main =" Bar graph of informational pages visited", col =  "blue")
+
+product <- table(unique_commerce$ProductRelated)
+barplot(product, main =" Bar graph of product related pages visited", col =  "green")
+
+```
+
+# The administrative, informational and product related columns are positively skewed.
+
+
+```{r}
+par(mfrow=c(3,3), mar=c(2,5,2,1), las=1, bty="n")
+admin<- table(unique_commerce$BounceRates)
+barplot(admin, main =" Bar graph of administrative", col =  "red")
+
+info <- table(unique_commerce$ExitRates)
+barplot(info, main =" Bar graph of info", col =  "blue")
+
+product <- table(unique_commerce$PageValues)
+barplot(product, main =" Bar graph of daily time spent on site", col =  "green")
+
+```
+## Feature importance
+```{r}
+# ensure results are repeatable
+set.seed(7)
+# load the library
+library(mlbench)
+library(caret)
+
+correlationMatrix <- cor(unique_commerce[,1:17])
+
+# summarize the correlation matrix
+print(correlationMatrix)
+# find attributes that are highly corrected (ideally >0.75)
+highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.5)
+# print indexes of highly correlated attributes
+print(highlyCorrelated)
+
+
+```
+# The 1st, 6th, 8th and 3rd columns are of the least improtance in predicting the revenue. 
+  
+# Implementing the solution
+# Supervised Learning
+## KNN Model
+```{r}
+# Creating Training and Test data subsets
+# We will now divide the dataset into two subsets. Our knn classification model would then be trained using subset “advert.train” 
+# and tested using “advert.test”. 
+# Seperating Class Attribute from rest of the dataset
+library(class)
+class<- data.frame("rev"=unique_commerce$Revenue)
+names(class)= "Rev"
+
+# Required to reproduce the results
+set.seed(999) 
+rnum<- sample(rep(1:12199))
+
+# Randomizing "airquality" dataset
+uniques <- unique_commerce[rnum,] 
+
+# Applying same randomization on "class" attribute
+rev <- as.data.frame(class[rnum,]) 
+
+# Splitting into training and testing set
+unique.train<- uniques[1:9000,]
+unique.train.target<- class[1:9000,]
+unique.test<- uniques[9001:12199,]
+unique.test.target<- class[9001:12199,]
+
+# Applying k-NN classification algorithm.
+# No. of neighbours are generally square root of total number of instances
+neigh<- round(sqrt(nrow(uniques)))+1 
+neigh
+# Applying the knn algorithm
+model3 <- knn(train = unique.train,  test = unique.test, cl=unique.train.target, k=neigh) 
+
+# Visualizing classification results
+
+table(factor(unique.test.target))
+tb3 <-table(unique.test.target, model3)
+
+# Calculating the Accuracy
+mean(unique.test.target== model3)
+# Vector of mean of true/1 and false70
+
+
+# Checking the accuracy
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy(tb3)
+```
+# KNN model has an accuracy of 79.83 in predicting the revenue.
+
+## SVM MODEL
+```{r}
+library(rpart)
+library(MASS)
+library(mlbench)
+library(caret)
+```
+
+```{r}
+#Splitting the dataset into training and testing sets
+unique_commerce$Revenue =as.factor(unique_commerce$Revenue)
+
+intrain <- createDataPartition(y = unique_commerce$Revenue, p= 0.8, list = FALSE)
+training <- unique_commerce[intrain,]
+testing <- unique_commerce[-intrain,]
+
+# We check the dimensions of out training dataframe and testing dataframe
+dim(training); 
+dim(testing);
+
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+
+svm_Linear <- train(Revenue ~., data = training, method = "svmLinear",
+trControl=trctrl,
+preProcess = c("center", "scale"),
+tuneLength = 10)
+
+# We can then check the reult of our train() model as shown below
+svm_Linear
+
+# We can use the predict() method for predicting results as shown below. 
+# We pass 2 arguements, our trained model and our testing data frame.
+test_pred <- predict(svm_Linear, newdata = testing)
+test_pred
+
+# Now checking for our accuracy of our model by using a confusion matrix 
+# ---
+# 
+confusionMatrix(table(test_pred, testing$Revenue))
+
+```
+# The SVM model  correctly predicted the classification of 2170 and incorrectly classified 269 with an accuracy of 88.97%.
+
+## NAIVES BAYES MODEL
+```{r}
+# Checking dimensions of the split
+# ---
+#
+prop.table(table(unique_commerce$Revenue)) * 100
+prop.table(table(training$Revenue)) * 100
+prop.table(table(testing$Revenue)) * 100
+
+# Comparing the outcome of the training and testing phase
+# ---
+# Creating objects x which holds the predictor variables and y which holds the response variables
+# ---
+#
+x = training[,-18]
+y = training$Revenue
+
+# Loading our inbuilt e1071 package that holds the Naive Bayes function.
+# ---
+# 
+library(e1071)
+
+# Now building our model 
+# ---
+# 
+model3 = train(x,y,'nb',trControl=trainControl(method='cv',number=10))
+
+
+# Model Evalution
+# ---
+# Predicting our testing set
+# 
+Predict <- predict(model3,newdata = testing )
+
+# Getting the confusion matrix to see accuracy value and other parameter values
+# ---
+# 
+confusionMatrix(Predict, testing$Revenue)
+
+```
+# The Naives Bayes model correctly predicted 2017 and incorrectly predicted 333 with an accuracy score of 86.35%
+
+# UNSUPERVISED LEARNING
+## K-Means model
+
+```{r}
+## Removing the target column Ozone
+
+unique.new<- unique_commerce[, c(1:17)]
+unique.revenue <- unique_commerce[, "Revenue"]
+head(unique.new)
+
+```
+```{r}
+unique.new <- as.data.frame(scale(unique.new))
+head(unique.new)
+
+```
+
+```{r}
+# Applying the K-means clustering algorithm with no. of centroids(k)=17
+# ---
+set.seed(37)
+results<- kmeans(unique.new,17) 
+
+# Previewing the no. of records in each cluster
+# 
+results$size 
+
+```
+```{r}
+# Getting the cluster vector that shows the cluster where each record falls
+# ---
+# 
+results$cluster
+
+```
+
+```{r}
+# Visualizing the  clustering results(unique commerce dataset)
+# ---
+# 
+par(mfrow = c(1,2), mar = c(5,4,2,2))
+
+# Plotting to see how Administration and administration duration have been distributed in clusters
+# ---
+#
+plot(unique.new[,1:2], col = results$cluster) 
+
+# Plotting to see how informational and informationl duration have been distributed in clusters
+# ---
+#
+plot(unique.new[,3:4], col = results$cluster)
+
+# Plotting to see how product related and product related durationhave been distributed in clusters
+# ---
+#
+plot(unique.new[,5:6], col = results$cluster)
+
+# Plotting to see how bounce rate and exit rates have been distributed in clusters
+# ---
+#
+plot(unique.new[,7:8], col = results$cluster)
+```
+```{r}
+# Verifying the results of clustering
+# ---
+# 
+par(mfrow = c(2,2), mar = c(5,4,2,2))
+
+# Plotting to see how Administration and administration duration data points have been distributed in clusters
+plot(unique.new[c(1,2)], col = results$cluster)
+
+# Plotting to see how Administration and administration duration data points have been distributed 
+# originally as per "Revenue" attribute in dataset
+# ---
+#
+plot(unique.new[c(1,2)], col = unique.revenue)
+
+# Plotting to see how informational and informationl duration data points have been distributed in clusters
+# ---
+# 
+plot(unique.new[c(3,4)], col = results$cluster)
+plot(unique.new[c(3,4)], col = unique.revenue)
+```
+## Hierarchial clustering
+
+```{r}
+# We now use the R function hclust() for hierarchical clustering
+# ---
+
+# First we use the dist() function to compute the Euclidean distance between observations, 
+# d will be the first argument in the hclust() function dissimilarity matrix
+# ---
+
+d <- dist(unique_commerce, method = "euclidean")
+#d
+
+# We then hierarchical clustering using the Ward's method
+# ---
+# 
+res.hc <- hclust(d, method = "ward.D2" )
+res.hc
+
+```
+```{r}
+# First we use the dist() function to compute the Euclidean distance between observations, 
+# d will be the first argument in the hclust() function dissimilarity matrix
+# ---
+
+b <- dist(unique_commerce, method = "euclidean")
+#d
+
+# We then hierarchical clustering using the Ward's method
+# ---
+# 
+method_unique <- c("single", "average","median", "centroid", "mcquitty", "ward.D2")
+
+
+for (i in 1:length(method_unique)){
+  dendo_unique <- hclust(b, method = method_unique[i])
+  plot(dendo_unique, cex= 0.5, hang = -1)
+}
+  
+```
+
+## DBSCAN Model
+```{r}
+# Importing the required package
+install.packages("dbscan")
+
+# Loading the required library
+library("dbscan")
+
+# Removing the class label 
+
+unique1<-unique_commerce[,c(1:17)]
+head(unique1)
+
+
+# Applying our DBSCAN algorithm
+# ---
+# We want minimum 4 points with in a distance of eps(0.4)
+# 
+db<-dbscan(unique1,eps=0.4,MinPts = 4)
+
+# Printing out the clustering results
+print(db)
+
+# We also plot our clusters as shown
+# ---
+# The dataset and cluster method of dbscan is used to plot the clusters.
+# 
+hullplot(unique1,db$cluster)
+
+
+```
+
+```{r}
+
+```

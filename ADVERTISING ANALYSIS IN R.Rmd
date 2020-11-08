@@ -1,0 +1,728 @@
+---
+title: "ADVERTISING ANALYSIS IN R"
+author: "Chelagat Pauline Gechure"
+date: "10/30/2020"
+output: html_document
+---
+
+# ADVERTISING ANALYSIS
+
+## Research question
+Identify which individuals are most likely to click on the ads of an online cryptography course on a blog of a Kenyan entrepreneur.
+
+## Metric of success
+Successful identification of an individuals characteristics
+
+## Context
+A Kenyan entrepreneur has created an online cryptography course and would want to advertise it on her blog. She currently targets audiences originating from various countries. In the past, she ran ads to advertise a related course on the same blog and collected data in the process. She would now like to employ your services as a Data Science Consultant to help her identify which individuals are most likely to click on her ads. 
+
+## Experimental design and appropriateness of available data.
+Loading the data.
+Cleaning of the data: outliers, missing data, duplicates and anomalies.
+Univariate and bivariate EDA
+Recommendations
+
+```{r}
+#Loading the data
+advertising <- read.csv("http://bit.ly/IPAdvertisingData", sep=",", header = TRUE)
+View(advertising)
+
+#Previweing the dataset
+str(advertising)
+
+dim(advertising)
+
+head(advertising)
+
+class(advertising)
+
+typeof(advertising)
+
+#Finding the lenght of the dataframe
+length(advertising)
+```
+## Cleaning the data
+```{r}
+##Cleaning the data
+#Identifying the missing values
+is.na(advertising)
+
+# Finding the percentage of null values in the dataset
+colSums(is.na(advertising))/length(advertising)*100
+
+#There are no missing values in the dataset.
+```
+
+There are no missing values in the dataset.
+
+```{r}
+##Checking and dealing with duplicates
+duplicate_rows <- advertising[duplicated(advertising),]
+duplicate_rows
+
+```
+
+There are no duplicate values in the dataset.
+
+##Outliers
+```{r}
+##Checking and dealing with outliers
+
+library(tidyverse)
+
+outliers <- boxplot(advertising %>% select_if(is.numeric))
+outliers
+
+#The column Area.income has outliers.
+
+boxplot.stats(advertising$Area.income)$out
+##Viewing the outliers
+stat = boxplot.stats(advertising$Area.income)
+stat
+```
+
+There are a few outliers in the Area Income column but they will not be remove as it is common for people to be of varying ages.
+
+# UNIVARIATE SUMMARY
+## 1. MEASURES OF CENTRAL TENDANCY
+### MEAN
+```{r}
+##MEAN
+#Finding the mean of daily time spent on site
+daily.time.spent.mean <- mean(advertising$Daily.Time.Spent.on.Site)
+daily.time.spent.mean
+
+#Finding the mean of age
+age.mean <- mean(advertising$Age)
+age.mean
+
+#Finding the mean of area income
+area.income.mean <- mean(advertising$Area.Income)
+area.income.mean
+
+#Finding the mean of daily internt usage
+daily.internet.mean <- mean(advertising$Daily.Internet.Usage)
+daily.internet.mean
+
+```
+
+The mean dailt time spent on the site is 65.
+The mean age of the individual is 36 years.
+The mean area income is 55000
+The mean daily internet usage is 180.
+
+### MEDIAN
+```{r}
+##MEDIAN
+#Finding the median of daily time spent on site
+daily.time.spent.median <- median(advertising$Daily.Time.Spent.on.Site)
+daily.time.spent.median
+
+#Finding the median of age
+age.median <- median(advertising$Age)
+age.median
+
+#Finding the median of area income
+area.income.median <- median(advertising$Area.Income)
+area.income.median
+
+#Finding the median of daily internt usage
+daily.internet.median <- median(advertising$Daily.Internet.Usage)
+daily.internet.median
+
+```
+
+The median dailt time spent on the site is 68.215.
+The median age of the individual is 35 years.
+The median area income is 57012.3
+The median daily internet usage is 180.13.
+
+## MODE
+```{r}
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+# Calculating the mode using out getmode() function
+
+#Finding the mode of daily time spent on site
+daily.time.spent.mode<- getmode(advertising$Daily.Time.Spent.on.Site)
+daily.time.spent.mode
+
+#Finding the median of age
+age.mode <- getmode(advertising$Age)
+age.mode
+
+#Finding the median of area income
+area.income.mode <- getmode(advertising$Area.Income)
+area.income.mode
+
+#Finding the median of daily internt usage
+daily.internet.mode<- getmode(advertising$Daily.Internet.Usage)
+daily.internet.mode
+
+male.mode <- getmode(advertising$Male)
+male.mode
+
+clicks.mode <- getmode(advertising$Clicked.on.Ad)
+clicks.mode
+
+topics.mode <- getmode(advertising$Ad.Topic.Line)
+topics.mode
+
+city.mode <- getmode(advertising$City)
+city.mode
+
+country.mode <- getmode(advertising$Country)
+country.mode
+
+
+```
+
+The mode daily time spent on the site is 62.26.
+The mode age of the individual is 31 years.
+The mode area income is 61833.9
+The mode daily internet usage is 167.22
+The most common topic is the Cloned 5th generation orchestration.
+The most common city is Losamouth.
+The most common country is Czech Republic.
+
+## 2. MEASURES OF DISPERSION 
+### Min, 1st quantile, median, 3rd quantile and max
+```{r}
+#Finding the min, 1st quantilr, median, 3rd quantile and max of numeric columns.
+advertising.summary <- summary(advertising)
+advertising.summary
+
+#For each column
+daily.time.summary <- summary(advertising$ Daily.Time.Spent.on.Site)
+daily.time.summary 
+
+age.summary <- summary(advertising$Age)
+age.summary
+
+area.income.summary <- summary(advertising$Area.Income)
+area.income.summary
+
+daily.internet.summary <- summary(advertising$ Daily.Internet.Usage)
+daily.internet.summary
+
+```
+
+### Quantile 
+```{r}
+#For each column
+daily.time.quantile <- quantile(advertising$ Daily.Time.Spent.on.Site)
+daily.time.quantile
+
+age.quantile <- quantile(advertising$Age)
+age.quantile
+
+area.income.quantile <- quantile(advertising$Area.Income)
+area.income.quantile
+
+daily.internet.quantile <- quantile(advertising$ Daily.Internet.Usage)
+daily.internet.quantile
+```
+Daily time spent on the site ranges between 32.6 - 91.43..
+Age of the individual ranges between 19-61 .
+Area income ranges between 13996 - 79484
+Daily internet usage ranges between 104.78-269.96.
+
+### Variance
+```{r}
+#For each column
+daily.time.var <- var(advertising$ Daily.Time.Spent.on.Site)
+daily.time.var
+
+age.var <- var(advertising$Age)
+age.var
+
+area.income.var <- var(advertising$Area.Income)
+area.income.var
+
+daily.internet.var <- var(advertising$ Daily.Internet.Usage)
+daily.internet.var
+```
+The variance of daily time spent on the site is 251.3371.
+The variance age of the individual is 77.1861 years.
+The variance area income is 179952406
+The varaince daily internet usage is 1927.415.
+
+### Standard deviation
+```{r}
+#For each column
+daily.time.sd <- sd(advertising$ Daily.Time.Spent.on.Site)
+daily.time.sd
+
+age.sd <- sd(advertising$Age)
+age.sd
+
+area.income.sd <- sd(advertising$Area.Income)
+area.income.sd
+
+daily.internet.sd <- sd(advertising$ Daily.Internet.Usage)
+daily.internet.sd
+```
+The standard deviation of daily time spent on the site is 15.85361.
+The standard deviation of  age of the individual is 8.7855.
+The standard deviation of area income is 13414.63
+The standard deviation daily internet usage is 43.9023
+
+# 3. Graphical univariate
+## Boxplots
+```{r}
+# For each column
+boxplot(advertising$ Daily.Time.Spent.on.Site, main = "Boxplot of daily time spent on site", col = "blue")
+
+boxplot(advertising$Area.Income, main = "Boxplot of area income", col = "red")
+
+boxplot(advertising$ Daily.Internet.Usage, main = "Boxplot of daily internet usage", col = "green")
+
+boxplot(advertising$Age, main = "Boxplot of age", col = "yellow")
+```
+
+## Bar graphs
+```{r}
+#For each numeric column
+
+daily.time.spent.frequency <- table(advertising$Daily.Time.Spent.on.Site)
+barplot(daily.time.spent.frequency, main =" Bar graph of daily time spent on site", col =  "blue")
+
+area.income.frequency <- (advertising$Area.Income)
+barplot(area.income.frequency, main = "Bar graph of area income", col = "red")
+
+daily.internet.frequency <- table(advertising$ Daily.Internet.Usage)
+barplot(daily.internet.frequency, main = "Bar graph of daily internet usage", col = "green")
+
+age.frequency <- table(advertising$Age)
+barplot(age.frequency, main = "Bar graph of age", col = "yellow")
+
+male.frequency <- table(advertising$Male)
+barplot(male.frequency, main="Bar graph of male", col = "purple")
+
+clicked.on.frequency <- table(advertising$Clicked.on.Ad)
+barplot(clicked.on.frequency, main="Bar graph of clicked on ads", col="pink")
+```
+
+
+The column age is slightly positively skewed to the right and has a normal kurtosis.
+## Histograms
+
+```{r}
+#For each column
+hist(advertising$Daily.Time.Spent.on.Site, main = " Histogram of daily time spent on site", xlab = "Time spent on site", col="blue")
+
+hist(advertising$Age, main = " Histogram of age", xlab = "Age", col = " yellow")
+
+hist(advertising$Area.Income, main = "Histogram of area income", xlab = "Area income", col = "red")
+
+hist(advertising$Daily.Internet.Usage, main = " Histogram of daily internet usage", xlab = "Daily internet usage", col ="green")
+
+```
+
+Daily time is negatively skewed and appears to be double peaked.
+Age column is positively skewed.
+Area income is negatively skewed and has a normal kurtosis.
+Daily internet usage is double peaked.
+
+# 4. Bivariate and multivariate  graphical analysis
+## Bivariate summary
+### Covariance
+
+```{r}
+# Assigning the columns to variables
+site <- advertising$Daily.Time.Spent.on.Site
+age <- advertising$Age
+income <- advertising$Area.Income
+internet <- advertising$Daily.Internet.Usage
+male <-advertising$Male
+clicks <- advertising$Clicked.on.Ad
+
+# Using the cov() function to find the covariance
+cov(site, age)
+cov(site, income)
+cov(site, internet)
+cov(site, male)
+cov(site, clicks)
+
+cov(age,income)
+cov(age,internet)
+cov(age, male)
+cov(age, clicks)
+
+cov(income, internet)
+cov(income, male)
+cov(income, clicks)
+
+cov(internet, male)
+cov(internet, clicks)
+
+cov(male, clicks)
+
+```
+The covariance of daily time spent on a site and clicks on ad is about -5.933143. It indicates a negative linear relationship between the two variables.
+The covariance of age and clicks on ad is about 2.164665. It indicates a positive linear relationship between the two variables.
+The covariance of area income and clicks on ad is about -3195.989 It indicates a  large negative linear relationship between the two variables.
+The covariance of daily internet usage and clicks on ad is about -17.27409. It indicates a negative linear relationship between the two variables.
+
+### Correlation
+```{r}
+# Using the cor() function to find the covariance
+cor(site, age)
+cor(site, income)
+cor(site, internet)
+cor(site, male)
+cor(site, clicks)
+
+cor(age,income)
+cor(age,internet)
+cor(age, male)
+cor(age, clicks)
+
+cor(income, internet)
+cor(income, male)
+cor(income, clicks)
+
+cor(internet, male)
+cor(internet, clicks)
+
+cor(male, clicks)
+```
+
+The correlation of daily time spent on a site and clicks on ad is about -0.748. The variables are strongly negatively linearly related.
+The correlation of age and clicks on ad is 0.4925. The variables are positively linearly related.
+The correlation of area income and clicks on ad is about -0.4762.The variables are negatively linearly related.
+The correlation of daily internet usage  and clicks is -0.7865.The variables are strongly negatively linearly related.
+The correlation of male  and clicks is -0.038.The variables are weakly negatively linearly related.
+
+```{r}
+## Creating a matrix
+library(tidyverse)
+matrix <- cor(advertising %>% select_if(is.numeric))
+
+heatmap(matrix)
+
+#geom_tile(matrix)
+
+
+##Method 1
+library(reshape)
+melted_cormat <- melt(matrix)
+head(melted_cormat)
+
+library(ggplot2)
+ggplot(data = melted_cormat, aes(x=X1, y=X2, fill=value)) + 
+  geom_tile()
+
+##Mthod 2
+corrplot::corrplot((matrix))
+```
+## Graphical techniques
+### Scatterplots
+```{r}
+# Creating the scatter plot of clicks and its relationship to other variables
+plot(site, clicks, xlab="Daily time spent on site", ylab="Clicks on ad", col = "blue")
+plot(age, clicks, xlab="Age", ylab="Clicks on ad", col = "yellow")
+plot(internet, clicks, xlab="Daily internet usage", ylab="Clicks on ad", col = "green")
+plot(income, clicks, xlab="Area income", ylab="Clicks on ad", col = "red")
+plot(male, clicks, xlab="Male", ylab="Clicks on ad", col = "purple")
+```
+```{r}
+# Creating the scatter plot of site and its relationship to other variables
+
+plot(site, age, xlab="Daily time spent on Site", ylab="Age", col = "yellow")
+plot(site, internet, xlab="Daily time spent on site", ylab="Daily internet usage", col = "green")
+plot(site, income, xlab="Daily time spent on site", ylab="Area income", col = "red")
+plot(site, male,  xlab="Daily time spent on site", ylab="Male", col = "purple")
+```
+
+There is no apparent strong relationship.
+
+
+```{r}
+# Creating some visualisations to take a look at each variable
+# ---
+# Visualisation 2
+# 
+ggplot(advertising, aes(Age, colour = Clicked.on.Ad)) +
+geom_freqpoly(binwidth = 1) + labs(title="Age by clicks on ad")
+
+```
+```{r}
+# Creating some visualisations to take a look at each variable
+# ---
+# Visualisation 3
+# 
+ggplot(advertising, aes(Country, colour = Clicked.on.Ad)) +
+geom_freqpoly(binwidth = 1) + labs(title="Country by clicks on ad")
+
+```
+```{r}
+# Creating some visualisations to take a look at each variable
+# ---
+# Visualisation 4
+# 
+ggplot(advertising, aes(Male, colour = Clicked.on.Ad)) +
+geom_freqpoly(binwidth = 1) + labs(title="Gender by clicks on ad")
+
+```
+
+
+## Recommendations
+
+The individuals to be targeted spend between 32.6-91.43 hours on the site with mean time being 68.27 hours amd most people spending about 62.26 hours.
+This individual most like is between the ages of 19 and 61 and is around 36 years with most individuals being aged 31 years.
+The individual lives in an area with an income between 13996-79484 with most people who visit the site having an income of 61833.
+This individual to be targeted has a daily internet usage between 104.78-269.96 with most people having a usage of 167.22.
+Most of the individuals are from Lisamouth city and Czech Republic and the most visited topic is  Cloned 5th generation orchestration.
+It is worth noting tha age has a positive correlation with the clicks on an ad and should be considered as on of the strong factors to consider.
+
+```{r}
+# Encoding the categorical columns.
+for (i in 1:length(advertising)){
+ advertising[[i]] <- as.numeric(as.factor(advertising[[i]]))
+}
+```
+
+```{r}
+# Removing the time stamp column as it will not be needed in the modelling
+advert <- advertising %>%select(, -9)
+advert
+
+```
+
+
+## DECISION TREES MODEL
+```{r}
+## Decision trees
+#installing the needed packages
+library(rpart)
+library(MASS)
+library(mlbench)
+
+m <- rpart(Clicked.on.Ad ~ ., 
+           data = advert,
+           method = "class")
+#install.packages("rpart.plot")
+
+library(rpart.plot)
+
+rpart.plot(m)
+```
+```{r}
+# Creating the tree.
+  output.advert <- ctree(
+  Clicked.on.Ad ~ Daily.Internet.Usage + Daily.Time.Spent.on.Site, 
+  data = advert)
+
+# Plotting the tree.
+plot(output.advert)
+```
+
+# The columns daily time spent on the site and daily internet usage were used to classify whether an individual clicked on the ad or not.
+
+```{r}
+# Confusion matrix
+p <- predict(m, advert, type = "class")
+table(p, advert$Clicked.on.Ad)
+tb <- table(p,advert$Clicked.on.Ad)
+
+# Checking the accuracy
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy(tb)
+
+```
+# The accuracy of the decision model without hyperparemter tuning is 95.7% which is good enough but also suggests overfitting.
+
+```{r}
+#Improving the decision tree  model further. 
+library(caret)
+library(ranger)
+
+set.seed(42)
+myGrid <- expand.grid(mtry = c(5, 10, 20, 40, 60),
+                     splitrule = c("gini", "extratrees"),
+                     min.node.size = c(5, 10, 20, 40, 60))
+model <- train(Clicked.on.Ad ~ .,
+               data = advert,
+               method = "ranger", 
+               tuneGrid = myGrid,
+               trControl = trainControl(method = "cv",
+                                       number = 5,
+                                       verboseIter = FALSE))
+
+# Printing the model
+model
+
+#plotting the model
+plot(model)
+
+```
+
+# Accuracy was used to select the optimal model using the largest value.
+# The final values used for the model were mtry = 5, splitrule = extratrees and min.node.size = 10.
+```{r}
+
+# Using the final values used for the model mtry = 5, splitrule = extratrees and min.node.size = 5 and building an optimal model.
+advert$Clicked.on.Ad =as.factor(advert$Clicked.on.Ad)
+set.seed(42)
+myGrid2 <- expand.grid(mtry = 5,
+                     splitrule = "extratrees",
+                     min.node.size = 5)
+model2 <- train(Clicked.on.Ad ~ .,
+               data = advert,
+               method = "ranger", 
+               tuneGrid = myGrid2,
+               trControl = trainControl(method = "cv",
+                                       number = 5,
+                                       verboseIter = FALSE))
+
+# Printing the model
+model2
+
+```
+
+```{r}
+# Confusion matrix
+p <- predict(model2, advert, type = "raw")
+table(p, advert$Clicked.on.Ad)
+tb <- table(p, advert$Clicked.on.Ad)
+
+# Checking the accuracy
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+accuracy(tb)
+
+```
+# After tuning the hyperparamters the decision tree model is 99.2%. 
+
+
+## KNN MODEL
+
+
+```{r}
+# Creating Training and Test data subsets
+# We will now divide the dataset into two subsets. Our knn classification model would then be trained using subset “advert.train” 
+# and tested using “advert.test”. 
+# Seperating Class Attribute from rest of the dataset
+class<- data.frame("click"=advert$Clicked.on.Ad)
+names(class)= "Click"
+
+# Required to reproduce the results
+set.seed(999) 
+rnum<- sample(rep(1:1000))
+
+# Randomizing "airquality" dataset
+adverts<- advert[rnum,] 
+
+# Applying same randomization on "class" attribute
+clicks <- as.data.frame(class[rnum,]) 
+
+# Splitting into training and testing set
+advert.train<- advert[1:800,]
+advert.train.target<- class[1:800,]
+advert.test<- advert[801:1000,]
+advert.test.target<- class[801:1000,]
+
+# Applying k-NN classification algorithm.
+# No. of neighbours are generally square root of total number of instances
+neigh<- round(sqrt(nrow(advert)))+1 
+neigh
+# Applying the knn algorithm
+model3 <- knn(train = advert.train,  test = advert.test, cl=advert.train.target, k=neigh) 
+
+# Visualizing classification results
+
+table(factor(advert.test.target))
+tb3 <-table(advert.test.target, model3)
+
+# Calculating the Accuracy
+mean(advert.test.target== model3)
+# Vector of mean of true/1 and false70
+accuracy(tb3)
+```
+# KNN model has an accuracy of 95.5% accuracyin predicting whether an idnividual clicked on an ad or not.
+
+## SVM MODEL
+```{r}
+#Splitting the dataset into training and testing sets
+advert$Clicked.on.Ad =as.factor(advert$Clicked.on.Ad)
+intrain <- createDataPartition(y = advert$Clicked.on.Ad, p= 0.8, list = FALSE)
+training <- advert[intrain,]
+testing <- advert[-intrain,]
+
+# We check the dimensions of out training dataframe and testing dataframe
+dim(training); 
+dim(testing);
+
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+
+svm_Linear <- train(Clicked.on.Ad ~., data = training, method = "svmLinear",
+trControl=trctrl,
+preProcess = c("center", "scale"),
+tuneLength = 10)
+
+# We can then check the reult of our train() model as shown below
+svm_Linear
+
+# We can use the predict() method for predicting results as shown below. 
+# We pass 2 arguements, our trained model and our testing data frame.
+test_pred <- predict(svm_Linear, newdata = testing)
+test_pred
+
+# Now checking for our accuracy of our model by using a confusion matrix 
+# ---
+# 
+confusionMatrix(table(test_pred, testing$Clicked.on.Ad))
+
+```
+# SVM model correctly predicted 192 correctly and misclassified 8. It has an accuracy of 96% which is great.
+
+## NAIVES BAYES MODEL
+```{r}
+# Checking dimensions of the split
+# ---
+#
+prop.table(table(advert$Clicked.on.Ad)) * 100
+prop.table(table(training$Clicked.on.Ad)) * 100
+prop.table(table(testing$Clicked.on.Ad)) * 100
+
+# Comparing the outcome of the training and testing phase
+# ---
+# Creating objects x which holds the predictor variables and y which holds the response variables
+# ---
+#
+x = training[,-9]
+y = training$Clicked.on.Ad
+
+# Loading our inbuilt e1071 package that holds the Naive Bayes function.
+# ---
+# 
+library(e1071)
+
+# Now building our model 
+# ---
+# 
+model3 = train(x,y,'nb',trControl=trainControl(method='cv',number=10))
+
+
+# Model Evalution
+# ---
+# Predicting our testing set
+# 
+Predict <- predict(model3,newdata = testing )
+
+# Getting the confusion matrix to see accuracy value and other parameter values
+# ---
+# 
+confusionMatrix(Predict, testing$Clicked.on.Ad )
+
+```
+
+# Naives bayes model correctly classified 191 and misclassified 9. It has an accuracy of 95.5%.
+
+```{r}
+
+
+```
